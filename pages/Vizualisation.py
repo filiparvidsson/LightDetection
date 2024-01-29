@@ -2,6 +2,7 @@ import streamlit as st
 import pymongo
 import pandas as pd
 import os
+import config
 
 @st.cache_resource
 def init_connection():
@@ -9,7 +10,7 @@ def init_connection():
 
 client = init_connection()
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=config.CACHE_TTL)
 def get_data():
     db = client.Pico # Database name
     items = db.LDR2024.find()
@@ -22,7 +23,7 @@ def sum_data(data):
     count_dark = 0
 
     for item in data:
-        if item["value"] < 200:
+        if item["value"] < config.LIGHT_THRESHOLD:
             count_light += 1
         else:
             count_dark += 1
@@ -43,19 +44,27 @@ if st.button("Click here to download"):
     st.sidebar.success("Entries Downloaded")
     # if the entries csv already exists, delete it
     try:
-        os.remove("entries.csv")
+        os.remove(config.CSV_FILE)
     except:
         pass
-    df.to_csv("entries.csv", index=False)
+    df.to_csv(config.CSV_FILE, index=False)
     st.download_button(
         label="Download Entries",
         data=df.to_csv().encode("utf-8"),
-        file_name="entries.csv",
+        file_name=config.CSV_FILE,
         mime="text/csv",
     )
 
 st.title("Room brightness")
-st.line_chart(1400 - df["value"], color="#7bccc4")
+# calculate the median with a rolling window of 10 minutes
+df["median_diff"] = config.START_VALUE - df["value"].rolling(center=True, window=config.MEDIAN_WINDOW).median()
+# calculate the medium
+df["mean_diff"] = config.START_VALUE - df["value"].rolling(center=True, window=config.MEAN_WINDOW).mean()
+# calculate the difference
+df["diff"] = config.START_VALUE - df["value"]
+# display the two lines
+st.line_chart(df[["diff", "mean_diff", "median_diff"]], color=["#d9f0a3", "#41ab5d", "#006837"])
+
 
 st.title("Light on vs Light off")
 count_light, count_dark = sum_data(data)
