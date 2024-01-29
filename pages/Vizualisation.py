@@ -16,6 +16,19 @@ def get_data():
     items = list(items)
     return items
 
+def sum_data(data):
+    # count number of indexes which has value under 200
+    count_light = 0
+    count_dark = 0
+
+    for item in data:
+        if item["value"] < 200:
+            count_light += 1
+        else:
+            count_dark += 1
+    
+    return count_light, count_dark
+
 data = get_data()
 # visualize the data using the "value" and "timeStamp", the timeStamp is a UTC timestamp
 df = pd.DataFrame(data)
@@ -24,7 +37,7 @@ df = df.sort_index()
 
 # visualize using streamlit line chart
 st.title("Vizualisation")
-st.line_chart(df["value"])
+st.line_chart(df["value"], color="#0868ac")
 
 if st.button("Click here to download"):
     st.sidebar.success("Entries Downloaded")
@@ -40,4 +53,13 @@ if st.button("Click here to download"):
         file_name="entries.csv",
         mime="text/csv",
     )
+
+st.title("Room brightness")
+st.line_chart(1400 - df["value"], color="#7bccc4")
+
+st.title("Light on vs Light off")
+count_light, count_dark = sum_data(data)
+st.write("On: ", count_light, "minutes")
+st.write("Off: ", count_dark, "minutes")
+
 
