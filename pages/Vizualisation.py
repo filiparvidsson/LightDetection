@@ -22,11 +22,11 @@ df = pd.DataFrame(data)
 df = df.set_index("timeStamp")
 df = df.sort_index()
 
-# visualize using streamlit line chart with a slider to select the date range
+# visualize using streamlit line chart
 st.title("Vizualisation")
 st.line_chart(df["value"])
 
-if st.button("Download Entries"):
+if st.button("Click here to download"):
     st.sidebar.success("Entries Downloaded")
     # if the entries csv already exists, delete it
     try:
